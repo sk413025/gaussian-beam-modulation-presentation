@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高斯光束聲光調製模擬</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/black.min.css">
+    <style>
+        .reveal .slides { text-align: left; }
+        .reveal pre { width: 100%; }
+        .two-column { display: flex; }
+        .two-column > * { flex: 1; }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <section>
+                <h2>高斯光束聲光調製的交互式模擬</h2>
+                <h3>理論、模型與實現</h3>
+                <p>演示者：[您的姓名]</p>
+                <p>日期：[當前日期]</p>
+            </section>
+
+            <section>
+                <h2>研究背景與動機</h2>
+                <ul>
+                    <li>聲光調製在光學和信息處理中的重要性</li>
+                    <li>現有模擬方法的局限性</li>
+                    <li>本研究的創新點：交互式、實時、全面的模擬</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>研究目標</h2>
+                <ul>
+                    <li>開發直觀、準確的聲光調製模擬工具</li>
+                    <li>提供對複雜物理過程的深入理解</li>
+                    <li>為教育和研究提供可視化平台</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>物理原理 - 高斯光束</h2>
+                <p>高斯光束強度分佈：</p>
+                <p>\[ I(r) = I_0 \exp(-2r^2/w_0^2) \]</p>
+                <ul>
+                    <li>\(I_0\)：中心強度</li>
+                    <li>\(r\)：到光束中心的距離</li>
+                    <li>\(w_0\)：光束腰半徑</li>
+                </ul>
+                <div id="gaussianBeamVisualization" style="width: 400px; height: 300px;"></div>
+            </section>
+
+            <section>
+                <h2>物理原理 - 聲光調製</h2>
+                <ul>
+                    <li>聲波導致介質折射率週期性變化</li>
+                    <li>光波通過介質時發生相位調製</li>
+                    <li>調製效果：\( E(t) = E_0 \cos(\omega t + \phi(t)) \)</li>
+                    <li>其中 \(\phi(t)\) 是由聲波引起的相位變化</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>數學模型 - 橢圓形聲波</h2>
+                <p>橢圓形聲波相位：</p>
+                <p>\[ \phi(x, y, t) = A \sin(k_a((x-x_0)\cos\theta + (y-y_0)\sin\theta)^2 + k_b(-(x-x_0)\sin\theta + (y-y_0)\cos\theta)^2 - \omega t) \]</p>
+                <ul>
+                    <li>\(A\)：振幅</li>
+                    <li>\(k_a\), \(k_b\)：與橢圓長短軸相關的參數</li>
+                    <li>\((x_0, y_0)\)：橢圓中心</li>
+                    <li>\(\theta\)：旋轉角度</li>
+                    <li>\(\omega\)：角頻率</li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>數學模型 - 調製過程</h2>
+                <p>調製強度時間演化：</p>
+                <p>\[ M(t) = \begin{cases} 0, & t \leq t_0 \\ \min(A, (t-t_0)k), & t > t_0 \end{cases} \]</p>
+                <p>調製後的光場：</p>
+                <p>\[ E(r, t) = E_0 \exp(-r^2/w_0^2) \exp(i\phi(x, y, t)) \]</p>
+                <p>調製後的強度近似：</p>
+                <p>\[ I(r, t) \approx I_0 \exp(-2r^2/w_0^2) [1 + 2M(t)\sin(\phi(x, y, t))] \]</p>
+            </section>
+
+            <section>
+                <h2>模擬實現 - 核心算法</h2>
+                <pre><code class="javascript">
+const gaussian = (x, y, sigma) => Math.exp(-(x*x + y*y) / (2 * sigma * sigma));
+
+const calculateEllipticalPhase = (x, y, centerX, centerY, a, b, angle, t) => {
+    const theta = angle * Math.PI / 180;
+    const dx = x - centerX;
+    const dy = y - centerY;
+    const rotatedX = dx * Math.cos(theta) + dy * Math.sin(theta);
+    const rotatedY = -dx * Math.sin(theta) + dy * Math.cos(theta);
+    const distance = Math.sqrt((rotatedX*rotatedX)/(a*a) + (rotatedY*rotatedY)/(b*b));
+    return 2 * Math.PI * (distance - modulationFrequency * t);
+};
+
+const modulationOverTime = (t) => {
+    const halfTime = 5;
+    if (t <= halfTime) return 0;
+    return Math.min(modulationStrength, (t - halfTime) * rampUpSpeed / 5);
+};
+                </code></pre>
+            </section>
+
+            <section>
+                <h2>視覺化結果</h2>
+                <div class="two-column">
+                    <div>
+                        <h3>二維平面動畫</h3>
+                        <div id="modulationVisualization" style="width: 300px; height: 300px;"></div>
+                    </div>
+                    <div>
+                        <h3>一維時間序列</h3>
+                        <canvas id="intensityChart" width="400" height="300"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2>結論與未來工作</h2>
+                <ul>
+                    <li>成功開發了交互式聲光調製模擬工具</li>
+                    <li>提供了對複雜物理過程的直觀理解</li>
+                    <li>未來工作：
+                        <ul>
+                            <li>擴展到三維模擬</li>
+                            <li>加入更多物理效應（如散射、衍射）</li>
+                            <li>與實驗結果對比驗證</li>
+                        </ul>
+                    </li>
+                </ul>
+            </section>
+
+            <section>
+                <h2>謝謝聆聽</h2>
+                <p>問題與討論</p>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.1/chart.min.js"></script>
+    <script>
+        Reveal.initialize({
+            hash: true,
+            plugins: []
+        });
+
+        MathJax.Hub.Config({
+            tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+        });
+
+        // Gaussian beam visualization
+        function drawGaussianBeam() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 400;
+            canvas.height = 300;
+            document.getElementById('gaussianBeamVisualization').appendChild(canvas);
+            const ctx = canvas.getContext('2d');
+            const w0 = 50;
+            const I0 = 255;
+
+            for (let x = 0; x < canvas.width; x++) {
+                for (let y = 0; y < canvas.height; y++) {
+                    const r = Math.sqrt((x - canvas.width/2)**2 + (y - canvas.height/2)**2);
+                    const I = I0 * Math.exp(-2 * r**2 / w0**2);
+                    ctx.fillStyle = `rgb(${I},${I},${I})`;
+                    ctx.fillRect(x, y, 1, 1);
+                }
+            }
+        }
+
+        // Modulation visualization
+        function drawModulation() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 300;
+            canvas.height = 300;
+            document.getElementById('modulationVisualization').appendChild(canvas);
+            const ctx = canvas.getContext('2d');
+            let time = 0;
+
+            function animate() {
+                const imageData = ctx.createImageData(canvas.width, canvas.height);
+                const data = imageData.data;
+
+                for (let x = 0; x < canvas.width; x++) {
+                    for (let y = 0; y < canvas.height; y++) {
+                        const normalizedX = (x - canvas.width/2) / (canvas.width/4);
+                        const normalizedY = (y - canvas.height/2) / (canvas.height/4);
+                        const gaussianIntensity = Math.exp(-(normalizedX**2 + normalizedY**2) / 2);
+                        const phase = 2 * Math.PI * (Math.sqrt(normalizedX**2 + normalizedY**2) - time);
+                        const modulation = 1 + 0.5 * Math.sin(phase);
+                        const value = gaussianIntensity * modulation;
+
+                        const index = (y * canvas.width + x) * 4;
+                        data[index] = value * 255;     // R
+                        data[index + 1] = value * 255; // G
+                        data[index + 2] = value * 255; // B
+                        data[index + 3] = 255;         // A
+                    }
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+                time += 0.1;
+                requestAnimationFrame(animate);
+            }
+
+            animate();
+        }
+
+        // Intensity chart
+        function createIntensityChart() {
+            const ctx = document.getElementById('intensityChart').getContext('2d');
+            const chart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array(100).fill(0).map((_, i) => i),
+                    datasets: [{
+                        label: '調製後強度',
+                        data: Array(100).fill(0),
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    animation: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 2
+                        }
+                    }
+                }
+            });
+
+            let time = 0;
+            function updateChart() {
+                const newData = Math.sin(time) * 0.5 + 1;
+                chart.data.datasets[0].data.push(newData);
+                chart.data.datasets[0].data.shift();
+                chart.update('none');
+                time += 0.1;
+                requestAnimationFrame(updateChart);
+            }
+
+            updateChart();
+        }
+
+        window.addEventListener('load', () => {
+            drawGaussianBeam();
+            drawModulation();
+            createIntensityChart();
+        });
+    </script>
+</body>
+</html>
